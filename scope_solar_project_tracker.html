@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCOPE Solar — Project Media Tracker</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7f6;color:#17211f}
+header{background:#123c32;color:white;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+header h1{margin:0;font-size:24px}
+header p{margin:5px 0 0;opacity:.8}
+.container{max-width:1250px;margin:24px auto;padding:0 18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.card{background:white;border-radius:14px;padding:18px;box-shadow:0 4px 16px #0000000d}
+.stat-title{font-size:13px;color:#6b7773}.stat-value{font-size:30px;font-weight:700;margin-top:7px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+input,select,button,textarea{font:inherit}
+input[type=text],select{border:1px solid #d6dfdc;border-radius:9px;padding:10px 12px;background:white}
+.search{flex:1;min-width:220px}
+button{border:0;border-radius:9px;padding:10px 15px;cursor:pointer;font-weight:600}
+.primary{background:#e6a800;color:#fff}.secondary{background:#123c32;color:#fff}.danger{background:#c53b3b;color:#fff}.light{background:white;border:1px solid #d6dfdc}
+.table-wrap{background:white;border-radius:14px;box-shadow:0 4px 16px #0000000d;overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:850px}
+th,td{padding:13px 12px;border-bottom:1px solid #edf0ef;text-align:left}
+th{font-size:12px;text-transform:uppercase;color:#687570;background:#fafcfb}
+tr.done{background:#f0fbf4}
+tr.partial{background:#fffaf0}
+.status{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;font-weight:700}
+.status.done{background:#dff5e6;color:#17733c}.status.pending{background:#f3eeee;color:#9a3838}.status.partial{background:#fff0c7;color:#8a6200}
+.check{width:19px;height:19px;accent-color:#17804f}
+.actions button{padding:7px 9px;margin-right:4px}
+.modal-bg{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:15px;z-index:10}
+.modal{background:white;border-radius:15px;width:min(520px,100%);padding:22px}
+.modal h2{margin-top:0}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:6px}.full{grid-column:1/-1}
+.form-group input,.form-group select,.form-group textarea{border:1px solid #d6dfdc;border-radius:9px;padding:10px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.empty{text-align:center;padding:35px;color:#77827f}
+@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.stats{grid-template-columns:1fr 1fr}.container{padding:0 10px}.card{padding:14px}.stat-value{font-size:24px}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>SCOPE Solar — Project Media Tracker</h1>
+    <p>Track site photos, videos and publishing status</p>
+  </div>
+  <button class="primary" onclick="openAdd()">+ Add Project</button>
+</header>
+
+<div class="container">
+  <div class="stats">
+    <div class="card"><div class="stat-title">Total Projects</div><div class="stat-value" id="total">0</div></div>
+    <div class="card"><div class="stat-title">Photos Taken</div><div class="stat-value" id="photos">0</div></div>
+    <div class="card"><div class="stat-title">Videos Taken</div><div class="stat-value" id="videos">0</div></div>
+    <div class="card"><div class="stat-title">Published</div><div class="stat-value" id="published">0</div></div>
+  </div>
+
+  <div class="toolbar">
+    <input class="search" id="search" type="text" placeholder="Search project / site name..." oninput="render()">
+    <select id="month" onchange="render()">
+      <option value="">All Months</option>
+      <option>June</option><option>July</option><option>August</option><option>September</option>
+    </select>
+    <button class="light" onclick="exportCSV()">Export CSV</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>No.</th><th>Month</th><th>Site / Project</th>
+          <th>Photo</th><th>Video</th><th>Published</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <h2 id="modalTitle">Add Project</h2>
+    <div class="form-grid">
+      <div class="form-group"><label>Month</label>
+        <select id="fmonth"><option>June</option><option>July</option><option>August</option><option>September</option></select>
+      </div>
+      <div class="form-group"><label>Project No. / Ref</label><input id="fno" type="text" placeholder="e.g. 01"></div>
+      <div class="form-group full"><label>Site Name</label><input id="fname" type="text" placeholder="e.g. 169-P, Johar Town, Lahore"></div>
+      <div class="form-group"><label>Notes</label><textarea id="fnotes" rows="3" placeholder="Optional notes"></textarea></div>
+      <div class="form-group">
+        <label>Media Status</label>
+        <label><input id="fphoto" type="checkbox"> Photo taken</label>
+        <label><input id="fvideo" type="checkbox"> Video taken</label>
+        <label><input id="fpub" type="checkbox"> Published</label>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="light" onclick="closeModal()">Cancel</button>
+      <button class="secondary" onclick="saveProject()">Save Project</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const initial = [
+["June","1","169-P, Johar Town, Lahore"],["June","2","248-D, Rehman Garden, Lahore"],
+["June","3","320-T, LMC, Lahore"],["June","4","465-E, Johar Town, Lahore"],
+["June","5","C-6, H#07, SZH, Lahore"],["June","6","246-E-1, Johar Town, Lahore"],
+["June","7","8, Rehman Homes, Architect"],["June","8","836-F, Rehman Garden"],
+["June","9","236, Madina Block, Allama Town"],["June","10","823-A, Al-Hafeez Garden"],
+["June","11","144-A, DHA Rahbar"],["June","12","215, Nishtar Block"],
+["June","13","93-L, Al-Rehman Garden"],["June","14","961-P, Johar Town, Lahore"],
+["July","1","Hafiz Kot Khosa"],["July","2","627-N, Sabzazar, Lahore"],
+["July","3","649-N, Sabzazar, Lahore"],["July","4","215, Executive Block, Lahore"],
+["July","5","394, Gulshan Block, Lahore"],["July","6","412-F, Johar Town, Lahore"],
+["July","7","32, Bait-ul-Maryam, Lahore"]
+].map(x=>({month:x[0],no:x[1],name:x[2],photo:false,video:false,published:false,notes:""}));
+
+let projects = JSON.parse(localStorage.getItem("scopeSolarProjects") || "null") || initial;
+let editIndex = null;
+
+function saveData(){localStorage.setItem("scopeSolarProjects",JSON.stringify(projects))}
+function render(){
+  const q=document.getElementById("search").value.toLowerCase();
+  const m=document.getElementById("month").value;
+  const filtered=projects.filter(p=>(!m||p.month===m)&&(!q||p.name.toLowerCase().includes(q)));
+  document.getElementById("total").textContent=projects.length;
+  document.getElementById("photos").textContent=projects.filter(p=>p.photo).length;
+  document.getElementById("videos").textContent=projects.filter(p=>p.video).length;
+  document.getElementById("published").textContent=projects.filter(p=>p.published).length;
+  const rows=document.getElementById("rows");
+  if(!filtered.length){rows.innerHTML='<tr><td colspan="8" class="empty">No projects found.</td></tr>';return}
+  rows.innerHTML=filtered.map(p=>{
+    const i=projects.indexOf(p);
+    const complete=p.photo&&p.video&&p.published;
+    const partial=p.photo||p.video||p.published;
+    return `<tr class="${complete?'done':partial?'partial':''}">
+      <td>${escapeHtml(p.no)}</td><td>${p.month}</td><td><strong>${escapeHtml(p.name)}</strong>${p.notes?'<br><small>'+escapeHtml(p.notes)+'</small>':''}</td>
+      <td><input class="check" type="checkbox" ${p.photo?'checked':''} onchange="toggle(${i},'photo',this.checked)"></td>
+      <td><input class="check" type="checkbox" ${p.video?'checked':''} onchange="toggle(${i},'video',this.checked)"></td>
+      <td><input class="check" type="checkbox" ${p.published?'checked':''} onchange="toggle(${i},'published',this.checked)"></td>
+      <td><span class="status ${complete?'done':partial?'partial':'pending'}">${complete?'Complete':partial?'In Progress':'Pending'}</span></td>
+      <td class="actions"><button class="light" onclick="openEdit(${i})">Edit</button><button class="danger" onclick="removeProject(${i})">Delete</button></td>
+    </tr>`;
+  }).join("");
+}
+function toggle(i,key,val){projects[i][key]=val;saveData();render()}
+function openAdd(){editIndex=null;document.getElementById("modalTitle").textContent="Add Project";fillForm({month:document.getElementById("month").value||"June",no:"",name:"",photo:false,video:false,published:false,notes:""});document.getElementById("modal").style.display="flex"}
+function openEdit(i){editIndex=i;document.getElementById("modalTitle").textContent="Edit Project";fillForm(projects[i]);document.getElementById("modal").style.display="flex"}
+function fillForm(p){fmonth.value=p.month;fno.value=p.no;fname.value=p.name;fnotes.value=p.notes||"";fphoto.checked=!!p.photo;fvideo.checked=!!p.video;fpub.checked=!!p.published}
+function closeModal(){document.getElementById("modal").style.display="none"}
+function saveProject(){
+  const p={month:fmonth.value,no:fno.value.trim(),name:fname.value.trim(),notes:fnotes.value.trim(),photo:fphoto.checked,video:fvideo.checked,published:fpub.checked};
+  if(!p.name){alert("Please enter the site/project name.");return}
+  if(editIndex===null)projects.push(p);else projects[editIndex]=p;
+  saveData();closeModal();render();
+}
+function removeProject(i){if(confirm("Delete this project?")){projects.splice(i,1);saveData();render()}}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function exportCSV(){
+  const head=["No","Month","Site Name","Photo Taken","Video Taken","Published","Status"];
+  const lines=[head.join(",")];
+  projects.forEach(p=>lines.push([p.no,p.month,p.name,p.photo?"Yes":"No",p.video?"Yes":"No",p.published?"Yes":"No",p.photo&&p.video&&p.published?"Complete":(p.photo||p.video||p.published?"In Progress":"Pending")].map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")));
+  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="scope-solar-projects.csv";a.click();URL.revokeObjectURL(a.href);
+}
+render();
+</script>
+</body>
+</html>
